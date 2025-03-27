@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Grokチャットボット",
-  description: "Grok APIを使用したチャットボットアプリケーション",
+  description: "xAI APIを使用したチャットボットアプリケーション",
 };
 
 export default function RootLayout({
