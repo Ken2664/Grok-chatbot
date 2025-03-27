@@ -2,14 +2,16 @@ import { useRef, useEffect } from 'react';
 import { Chat } from '@/lib/store';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
+import { LoadingDots } from './LoadingDots';
 
 interface ChatWindowProps {
   chat: Chat | null;
   isLoading: boolean;
+  isResponding: boolean;
   onSendMessage: (content: string) => void;
 }
 
-export function ChatWindow({ chat, isLoading, onSendMessage }: ChatWindowProps) {
+export function ChatWindow({ chat, isLoading, isResponding, onSendMessage }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // メッセージが追加されたときに自動スクロール
@@ -47,12 +49,19 @@ export function ChatWindow({ chat, isLoading, onSendMessage }: ChatWindowProps) 
             {messages.map((message) => (
               <ChatMessage key={message.id} message={message} />
             ))}
+            {isResponding && (
+              <div className="flex justify-start mb-4">
+                <div className="px-4 py-3 rounded-lg bg-gray-200 text-gray-800 rounded-bl-none">
+                  <LoadingDots />
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </>
         )}
       </div>
       
-      <ChatInput onSendMessage={onSendMessage} isLoading={isLoading} />
+      <ChatInput onSendMessage={onSendMessage} isLoading={isLoading || isResponding} />
     </div>
   );
 } 

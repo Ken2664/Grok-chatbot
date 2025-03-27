@@ -1,6 +1,33 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { generateGrokResponse } from '@/lib/grok';
+import { generateGrokResponse, GrokMessage } from '@/lib/grok';
+
+// チャットタイトル生成用の補助関数
+async function generateChatTitle(userMessage: string) {
+  try {
+    // ユーザーの最初のメッセージからタイトルを生成する（最大20文字）
+    if (userMessage.length <= 20) {
+      return userMessage;
+    }
+    
+    // Grok APIを使用してタイトルを要約生成
+    const promptMessage: GrokMessage = {
+      role: 'user',
+      content: `次のメッセージから簡潔なチャットタイトルを20文字以内で作成してください。タイトルのみを返してください: "${userMessage}"`
+    };
+    
+    const titleResponse = await generateGrokResponse([promptMessage]);
+    // 不要な記号や空白を削除
+    const cleanTitle = titleResponse.replace(/["""'']/g, '').trim();
+    
+    // 20文字を超える場合は切り詰める
+    return cleanTitle.length > 20 ? cleanTitle.substring(0, 20) + '...' : cleanTitle;
+  } catch (error) {
+    console.error('タイトル生成エラー:', error);
+    // エラーが発生した場合はデフォルトタイトルを使用
+    return '新しいチャット';
+  }
+}
 
 // メッセージを送信
 export async function POST(request: Request) {
@@ -40,14 +67,37 @@ export async function POST(request: Request) {
       }
     });
     
-    // チャットの更新日時を更新
-    await prisma.chat.update({
-      where: { id: chatId },
-      data: { updatedAt: new Date() }
-    });
+    // 最初のメッセージの場合、チャットタイトルを自動生成
+    const messages = Array.isArray(chat.messages) ? chat.messages : [];
+    if (messages.length === 0 && chat.title === '新しいチャット') {
+      const generatedTitle = await generateChatTitle(content);
+      await prisma.chat.update({
+        where: { id: chatId },
+        data: { 
+          title: generatedTitle,
+          updatedAt: new Date()
+        }
+      });
+      
+      // 更新されたチャットを取得
+      const updatedChat = await prisma.chat.findUnique({
+        where: { id: chatId }
+      });
+      
+      // タイトルが更新されている場合は、chatを更新
+      if (updatedChat) {
+        chat.title = updatedChat.title;
+      }
+    } else {
+      // 最初のメッセージでない場合は、更新日時のみ更新
+      await prisma.chat.update({
+        where: { id: chatId },
+        data: { updatedAt: new Date() }
+      });
+    }
     
     // Grok APIを使用して応答を生成
-    const allMessages = [...chat.messages, userMessage];
+    const allMessages = [...messages, userMessage];
     const assistantResponse = await generateGrokResponse(allMessages);
     
     // アシスタントメッセージを保存
@@ -61,7 +111,8 @@ export async function POST(request: Request) {
     
     return NextResponse.json({
       userMessage,
-      assistantMessage
+      assistantMessage,
+      chatTitle: chat.title // 更新されたチャットタイトルを返す
     });
   } catch (error) {
     console.error('メッセージ送信エラー:', error);

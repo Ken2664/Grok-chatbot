@@ -11,7 +11,10 @@ export type GrokMessage = {
   content: string;
 };
 
-export async function generateGrokResponse(messages: Message[]): Promise<string> {
+// messageの型に応じて処理を分岐する関数
+export async function generateGrokResponse(messages: Message[]): Promise<string>;
+export async function generateGrokResponse(messages: GrokMessage[]): Promise<string>;
+export async function generateGrokResponse(messages: Message[] | GrokMessage[]): Promise<string> {
   try {
     const apiUrl = process.env.GROK_API_URL;
     const apiKey = process.env.XAI_API_KEY;
@@ -32,12 +35,18 @@ export async function generateGrokResponse(messages: Message[]): Promise<string>
     });
     
     // ユーザーとアシスタントの会話履歴を追加
-    messages.forEach(message => {
-      formattedMessages.push({
-        role: message.role as 'user' | 'assistant',
-        content: message.content
+    // Messageタイプの場合のみ変換が必要
+    if (messages.length > 0 && 'id' in messages[0]) {
+      (messages as Message[]).forEach(message => {
+        formattedMessages.push({
+          role: message.role as 'user' | 'assistant',
+          content: message.content
+        });
       });
-    });
+    } else {
+      // すでにGrokMessage型の場合はそのまま追加
+      formattedMessages.push(...(messages as GrokMessage[]));
+    }
 
     console.log('リクエスト送信中...'); // デバッグ用
 

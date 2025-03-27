@@ -24,6 +24,7 @@ interface ChatState {
   chats: Chat[];
   currentChat: Chat | null;
   isLoading: boolean;
+  isResponding: boolean;
   error: string | null;
   
   // チャット一覧取得
@@ -32,8 +33,8 @@ interface ChatState {
   // 特定のチャット取得
   fetchChat: (id: string) => Promise<void>;
   
-  // 新規チャット作成
-  createChat: (title: string) => Promise<Chat>;
+  // 新規チャット作成（タイトルはオプション）
+  createChat: (title?: string) => Promise<Chat>;
   
   // チャット更新
   updateChat: (id: string, title: string) => Promise<void>;
@@ -53,6 +54,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   chats: [],
   currentChat: null,
   isLoading: false,
+  isResponding: false,
   error: null,
   
   // チャット一覧取得
@@ -60,15 +62,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await axios.get('/api/chat');
-      const chats = response.data;
-      
-      // 各チャットのmessagesプロパティを確認し、存在しない場合は空配列として初期化
-      chats.forEach((chat: Chat) => {
-        if (!chat.messages) {
-          chat.messages = [];
+      // 各チャットのmessagesプロパティを確認し、必要に応じて初期化
+      const chats = response.data.map((chat: Chat) => {
+        if (!Array.isArray(chat.messages)) {
+          return { ...chat, messages: [] };
         }
+        return chat;
       });
-      
       set({ chats, isLoading: false });
     } catch (error) {
       set({ error: 'チャット一覧の取得に失敗しました', isLoading: false });
@@ -81,13 +81,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await axios.get(`/api/chat/${id}`);
+      // messagesプロパティがない場合は空の配列を設定
       const chatData = response.data;
-      
-      // messagesプロパティが存在しない場合は空配列として初期化
-      if (!chatData.messages) {
+      if (!Array.isArray(chatData.messages)) {
         chatData.messages = [];
       }
-      
       set({ currentChat: chatData, isLoading: false });
     } catch (error) {
       set({ error: 'チャットの取得に失敗しました', isLoading: false });
@@ -95,15 +93,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
   
-  // 新規チャット作成
-  createChat: async (title: string) => {
+  // 新規チャット作成（タイトルはオプション）
+  createChat: async (title = '新しいチャット') => {
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post('/api/chat', { title });
       const newChat = response.data;
       
-      // messagesプロパティが存在しない場合は空配列として初期化
-      if (!newChat.messages) {
+      // messagesプロパティを空の配列として初期化
+      if (!Array.isArray(newChat.messages)) {
         newChat.messages = [];
       }
       
@@ -160,31 +158,75 @@ export const useChatStore = create<ChatState>((set, get) => ({
   
   // メッセージ送信
   sendMessage: async (content: string, chatId: string) => {
-    set({ isLoading: true, error: null });
+    // ユーザーメッセージをローカルに追加
+    const tempUserMessage = {
+      id: `temp-${Date.now()}`,
+      content,
+      role: 'user' as const,
+      createdAt: new Date().toISOString(),
+      chatId
+    };
+    
+    // ユーザーメッセージを即座に表示
+    set((state) => {
+      if (state.currentChat && state.currentChat.id === chatId) {
+        const messages = state.currentChat.messages;
+        const existingMessages = Array.isArray(messages) ? messages : [];
+        
+        return {
+          currentChat: {
+            ...state.currentChat,
+            messages: [...existingMessages, tempUserMessage]
+          },
+          isResponding: true // 応答待ち状態をtrueに設定
+        };
+      }
+      return { isResponding: true };
+    });
+    
     try {
       const response = await axios.post('/api/messages', {
         content,
         chatId
       });
       
-      const { userMessage, assistantMessage } = response.data;
+      const { userMessage, assistantMessage, chatTitle } = response.data;
       
       set((state) => {
         if (state.currentChat && state.currentChat.id === chatId) {
+          // currentChatまたはmessagesがnullやundefinedの場合に対応
+          const messages = state.currentChat.messages;
+          const existingMessages = Array.isArray(messages) ? messages : [];
+          
+          // 一時メッセージを削除して実際のメッセージに置き換え
+          const filteredMessages = existingMessages.filter(msg => msg.id !== tempUserMessage.id);
+          
+          // チャットタイトルの更新があれば適用する
+          const updatedTitle = chatTitle || state.currentChat.title;
+          
+          // 現在のチャットの状態を更新
+          const updatedCurrentChat = {
+            ...state.currentChat,
+            title: updatedTitle,
+            messages: [...filteredMessages, userMessage, assistantMessage]
+          };
+          
+          // chatsリストも更新
+          const updatedChats = state.chats.map(chat => 
+            chat.id === chatId ? { ...chat, title: updatedTitle } : chat
+          );
+          
           return {
-            currentChat: {
-              ...state.currentChat,
-              messages: Array.isArray(state.currentChat.messages) 
-                ? [...state.currentChat.messages, userMessage, assistantMessage]
-                : [userMessage, assistantMessage]
-            },
+            chats: updatedChats,
+            currentChat: updatedCurrentChat,
+            isResponding: false,
             isLoading: false
           };
         }
-        return { isLoading: false };
+        return { isResponding: false, isLoading: false };
       });
     } catch (error) {
-      set({ error: 'メッセージの送信に失敗しました', isLoading: false });
+      set({ error: 'メッセージの送信に失敗しました', isResponding: false, isLoading: false });
       console.error('メッセージ送信エラー:', error);
     }
   },
