@@ -1,0 +1,101 @@
+# Grokチャットボット 要件定義書・実装定義書
+
+# 要件定義書
+要件定義:
+  プロジェクト名: Grokチャットボット
+  目的: 
+    - 個人利用向けのチャットボットウェブアプリケーションの開発
+    - Grok APIを使用した会話履歴を踏まえた応答の実現
+  
+  利用者: 
+    - 開発者個人
+
+  機能要件:
+    チャット機能:
+      - 新規チャットの作成
+      - チャット履歴の保存
+      - メッセージの送受信
+      - 過去の会話コンテキストを考慮した応答
+      - チャットタイトルの編集
+      - チャットの削除
+    
+    データ保存:
+      - データベースを使用したチャット履歴の保存
+      - チャットセッションとメッセージの関連付け
+    
+    インターフェース:
+      - シンプルで使いやすいUI
+      - レスポンシブデザイン
+
+  非機能要件:
+    性能:
+      - チャットの応答は3秒以内に表示
+    
+    セキュリティ:
+      - API鍵は環境変数で管理
+    
+    拡張性:
+      - 将来的な機能追加に対応できる設計
+
+# 実装定義書
+実装定義:
+  アーキテクチャ:
+    フレームワーク: Next.js (App Router)
+    言語: TypeScript
+    スタイリング: Tailwind CSS
+    状態管理: Zustand
+    データベース: PostgreSQL (Neon)
+    ORM: Prisma
+    API: Grok API
+
+  データモデル:
+    Chat:
+      - id: string (一意の識別子)
+      - title: string (チャットのタイトル)
+      - createdAt: DateTime (作成日時)
+      - updatedAt: DateTime (更新日時)
+      - messages: Message[] (関連メッセージのリスト)
+    
+    Message:
+      - id: string (一意の識別子)
+      - content: string (メッセージ内容)
+      - role: string ('user' または 'assistant')
+      - createdAt: DateTime (作成日時)
+      - chatId: string (関連するチャットのID)
+
+  API設計:
+    エンドポイント:
+      - GET /api/chat: チャット一覧取得
+      - POST /api/chat: 新規チャット作成
+      - GET /api/chat/[id]: 特定のチャット取得
+      - PATCH /api/chat/[id]: チャット更新
+      - DELETE /api/chat/[id]: チャット削除
+      - POST /api/messages: メッセージ送信
+
+  コンポーネント構成:
+    - ChatList: チャットリスト表示
+    - ChatWindow: チャット画面表示
+    - ChatMessage: 個別メッセージ表示
+    - ChatInput: メッセージ入力フォーム
+
+  状態管理:
+    - chats: チャット一覧
+    - currentChat: 現在選択中のチャット
+    - isLoading: 読み込み中かどうか
+    - error: エラーメッセージ
+    
+  デプロイ:
+    - Vercelへのデプロイを推奨
+    - 環境変数の設定が必要
+
+  設定手順:
+    1. Neonでデータベースを作成し接続情報を取得
+    2. .env.localに環境変数を設定 (DATABASE_URL, GROK_API_KEY, GROK_API_URL)
+    3. Prismaでマイグレーションを実行
+    4. アプリケーションを起動してテスト
+
+  今後の拡張案:
+    - ファイルアップロード機能の追加
+    - チャット会話の検索機能
+    - レスポンシブデザインの強化
+    - ダークモードの実装 
