@@ -30,6 +30,13 @@ GrokのAPIを使用した個人用チャットボットアプリケーション�
 
 1. リポジトリをクローン:
 
+**PowerShell/CMD:**
+```powershell
+git clone <リポジトリURL>
+cd llm-chatbot
+```
+
+**Bash (Linux/macOS):**
 ```bash
 git clone <リポジトリURL>
 cd llm-chatbot
@@ -37,8 +44,16 @@ cd llm-chatbot
 
 2. 依存関係をインストール:
 
+**PowerShell/CMD:**
+```powershell
+npm install
+```
+
+**Bash (Linux/macOS):**
 ```bash
 npm install
+# または
+yarn install
 ```
 
 3. 環境変数の設定:
@@ -52,22 +67,37 @@ GROK_API_URL="https://api.x.ai/v1"
 ```
 llm-app/prismaディレクトリに.envファイルを作製し、以下の環境変数を設定:
 
+```
 DATABASE_URL="postgresql://username:password@host:port/database" 
+```
 
 4. データベースマイグレーションを実行:
 
+**PowerShell/CMD:**
+```powershell
+npx prisma migrate dev --name init
+```
+
+**Bash (Linux/macOS):**
 ```bash
 npx prisma migrate dev --name init
 ```
 
 5. アプリケーションを起動:
 
-```bash
+**PowerShell/CMD:**
+```powershell
 npm run dev
 ```
 
-ブラウザで http://localhost:3000 にアクセスしてアプリケーションを使用できます。
+**Bash (Linux/macOS):**
+```bash
+npm run dev
+# または
+yarn dev
+```
 
+ブラウザで http://localhost:3000 にアクセスしてアプリケーションを使用できます。 
 ## 使用方法
 
 1. 「新規チャット」ボタンをクリックして新しい会話を開始
