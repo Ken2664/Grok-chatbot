@@ -56,7 +56,22 @@ npm install
 yarn install
 ```
 
-3. 環境変数の設定:
+3. Neonデータベースのセットアップ
+
+Neonアカウントの作成
+1. [Neon公式サイト](https://neon.tech)にアクセスし、アカウントを作成します。
+
+プロジェクト作成
+1. ダッシュボードから「New Project」を選択します。
+2. プロジェクト名を入力します（例：「grok-chatbot」）。
+3. リージョンを選択します（通常は最も近い地域）。
+4. 「Create Project」をクリックします。
+
+接続情報の取得
+1. 作成したプロジェクトの接続情報（接続文字列）をコピーします。
+2. 接続文字列の形式: `postgresql://user:password@hostname:port/database`
+
+4. 環境変数の設定:
 
 `.env.local`ファイルを作成し、以下の環境変数を設定:
 
@@ -71,7 +86,8 @@ llm-app/prismaディレクトリに.envファイルを作製し、以下の環�
 DATABASE_URL="postgresql://username:password@host:port/database" 
 ```
 
-4. データベースマイグレーションを実行:
+
+5. データベースマイグレーションを実行:
 
 **PowerShell/CMD:**
 ```powershell
@@ -83,7 +99,7 @@ npx prisma migrate dev --name init
 npx prisma migrate dev --name init
 ```
 
-5. アプリケーションを起動:
+6. アプリケーションを起動:
 
 **PowerShell/CMD:**
 ```powershell
