@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Chat } from '@/lib/store';
 
 interface ChatListProps {
@@ -20,6 +20,22 @@ export function ChatList({
 }: ChatListProps) {
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredChats, setFilteredChats] = useState<Chat[]>(chats);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // チャットリストが更新されたとき、または検索クエリが変更されたときにフィルタリングを行う
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredChats(chats);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = chats.filter(chat => 
+        chat.title.toLowerCase().includes(query)
+      );
+      setFilteredChats(filtered);
+    }
+  }, [chats, searchQuery]);
 
   const handleEditStart = (chat: Chat) => {
     setEditingChatId(chat.id);
@@ -41,24 +57,89 @@ export function ChatList({
     }
   };
 
+  const handleSearchFocus = () => {
+    // Ctrl+F または ⌘+F で検索ボックスにフォーカス
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  };
+
+  // 検索ボックスのキーボードショートカット
+  useEffect(handleSearchFocus, []);
+
   return (
     <div className="w-64 bg-gray-100 h-full flex flex-col border-r border-gray-200">
       <div className="p-4 border-b border-gray-200">
         <button
           onClick={onCreateChat}
-          className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
         >
           新規チャット
         </button>
+        
+        {/* 検索ボックス */}
+        <div className="relative">
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="チャットを検索..."
+            className="w-full p-2 pl-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <svg 
+            className="absolute left-2 top-2.5 h-4 w-4 text-gray-400"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
       <div className="flex-grow overflow-y-auto">
-        {chats.length === 0 ? (
+        {filteredChats.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
-            チャット履歴がありません
+            {chats.length === 0 ? "チャット履歴がありません" : "検索結果がありません"}
           </div>
         ) : (
           <ul className="divide-y divide-gray-200">
-            {chats.map((chat) => (
+            {filteredChats.map((chat) => (
               <li key={chat.id} className="relative">
                 {editingChatId === chat.id ? (
                   <div className="p-2 flex items-center">
