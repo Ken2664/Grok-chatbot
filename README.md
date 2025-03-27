@@ -1,13 +1,13 @@
-# Grokチャットボット
+# xAI チャットボット
 
-GrokのAPIを使用した個人用チャットボットアプリケーションです。過去の会話履歴を考慮した対話を行うことができます。
+xAI の API を使用した個人用チャットボットアプリケーションです。過去の会話履歴を考慮した対話を行うことができます。
 
 ## 機能
 
 - 複数のチャットスレッドの作成と管理
 - チャット履歴の永続化
 - 過去のコンテキストを考慮した応答
-- シンプルで使いやすいUI
+- シンプルで使いやすい UI
 
 ## 技術スタック
 
@@ -15,28 +15,30 @@ GrokのAPIを使用した個人用チャットボットアプリケーション�
 - 状態管理: Zustand
 - データベース: PostgreSQL (Neon)
 - ORM: Prisma
-- API: Grok API
+- API: xAI API
 
 ## セットアップ方法
 
 ### 前提条件
 
-- Node.js 18以上
+- Node.js 18 以上
 - NPM または Yarn
-- Grok API キー
-- PostgreSQLデータベース (Neonを推奨)
+- xAI API キー
+- PostgreSQL データベース (Neon を推奨)
 
 ### インストール手順
 
 ### 1. リポジトリをクローン:
 
 **PowerShell/CMD:**
+
 ```powershell
 git clone <リポジトリURL>
 cd llm-chatbot
 ```
 
 **Bash (Linux/macOS):**
+
 ```bash
 git clone <リポジトリURL>
 cd llm-chatbot
@@ -45,29 +47,34 @@ cd llm-chatbot
 ### 2. 依存関係をインストール:
 
 **PowerShell/CMD:**
+
 ```powershell
 npm install
 ```
 
 **Bash (Linux/macOS):**
+
 ```bash
 npm install
 # または
 yarn install
 ```
 
-### 3. Neonデータベースのセットアップ
+### 3. Neon データベースのセットアップ
 
-#### Neonアカウントの作成
-1. [Neon公式サイト](https://neon.tech)にアクセスし、アカウントを作成します。
+#### Neon アカウントの作成
+
+1. [Neon 公式サイト](https://neon.tech)にアクセスし、アカウントを作成します。
 
 #### プロジェクト作成
+
 1. ダッシュボードから「New Project」を選択します。
 2. プロジェクト名を入力します（例：「grok-chatbot」）。
 3. リージョンを選択します（通常は最も近い地域）。
 4. 「Create Project」をクリックします。
 
 #### 接続情報の取得
+
 1. 作成したプロジェクトの接続情報（接続文字列）をコピーします。
 2. 接続文字列の形式: `postgresql://user:password@hostname:port/database`
 
@@ -77,24 +84,26 @@ yarn install
 
 ```
 DATABASE_URL="postgresql://username:password@host:port/database"
-GROK_API_KEY="your-grok-api-key"
-GROK_API_URL="https://api.x.ai/v1"
-```
-llm-app/prismaディレクトリに.envファイルを作製し、以下の環境変数を設定:
-
-```
-DATABASE_URL="postgresql://username:password@host:port/database" 
+XAI_API_KEY="your-xAI-api-key"
+XAI_API_URL="https://api.x.ai/v1"
 ```
 
+llm-app/prisma ディレクトリに.env ファイルを作製し、以下の環境変数を設定:
+
+```
+DATABASE_URL="postgresql://username:password@host:port/database"
+```
 
 ### 5. データベースマイグレーションを実行:
 
 **PowerShell/CMD:**
+
 ```powershell
 npx prisma migrate dev --name init
 ```
 
 **Bash (Linux/macOS):**
+
 ```bash
 npx prisma migrate dev --name init
 ```
@@ -102,18 +111,21 @@ npx prisma migrate dev --name init
 ### 6. アプリケーションを起動:
 
 **PowerShell/CMD:**
+
 ```powershell
 npm run dev
 ```
 
 **Bash (Linux/macOS):**
+
 ```bash
 npm run dev
 # または
 yarn dev
 ```
 
-ブラウザで http://localhost:3000 にアクセスしてアプリケーションを使用できます。 
+ブラウザで http://localhost:3000 にアクセスしてアプリケーションを使用できます。
+
 ## 使用方法
 
 1. 「新規チャット」ボタンをクリックして新しい会話を開始
@@ -123,8 +135,8 @@ yarn dev
 
 ## 開発者向け情報
 
-- APIエンドポイントは `/api/chat` と `/api/messages` に実装されています
-- Prismaスキーマは `prisma/schema.prisma` にあります
+- API エンドポイントは `/api/chat` と `/api/messages` に実装されています
+- Prisma スキーマは `prisma/schema.prisma` にあります
 - 状態管理は `src/lib/store.ts` で行なっています
 
 ## ライセンス

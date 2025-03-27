@@ -33,38 +33,38 @@ async function generateChatTitle(userMessage: string) {
 export async function POST(request: Request) {
   try {
     const { content, chatId } = await request.json();
-    
+
     if (!content || !chatId) {
       return NextResponse.json(
-        { error: 'メッセージ内容とチャットIDは必須です' },
+        { error: "メッセージ内容とチャットIDは必須です" },
         { status: 400 }
       );
     }
-    
+
     // チャットの存在確認
     const chat = await prisma.chat.findUnique({
       where: { id: chatId },
       include: {
         messages: {
-          orderBy: { createdAt: 'asc' }
-        }
-      }
+          orderBy: { createdAt: "asc" },
+        },
+      },
     });
-    
+
     if (!chat) {
       return NextResponse.json(
-        { error: 'チャットが見つかりません' },
+        { error: "チャットが見つかりません" },
         { status: 404 }
       );
     }
-    
+
     // ユーザーメッセージを保存
     const userMessage = await prisma.message.create({
       data: {
         content,
-        role: 'user',
-        chatId
-      }
+        role: "user",
+        chatId,
+      },
     });
     
     // 最初のメッセージの場合、チャットタイトルを自動生成
@@ -99,26 +99,26 @@ export async function POST(request: Request) {
     // Grok APIを使用して応答を生成
     const allMessages = [...messages, userMessage];
     const assistantResponse = await generateGrokResponse(allMessages);
-    
+
     // アシスタントメッセージを保存
     const assistantMessage = await prisma.message.create({
       data: {
         content: assistantResponse,
-        role: 'assistant',
-        chatId
-      }
+        role: "assistant",
+        chatId,
+      },
     });
-    
+
     return NextResponse.json({
       userMessage,
       assistantMessage,
       chatTitle: chat.title // 更新されたチャットタイトルを返す
     });
   } catch (error) {
-    console.error('メッセージ送信エラー:', error);
+    console.error("メッセージ送信エラー:", error);
     return NextResponse.json(
-      { error: 'メッセージの送信に失敗しました' },
+      { error: "メッセージの送信に失敗しました" },
       { status: 500 }
     );
   }
-} 
+}
