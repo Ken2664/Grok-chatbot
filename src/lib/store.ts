@@ -17,6 +17,9 @@ export type Message = {
   role: 'user' | 'assistant';
   createdAt: string;
   chatId: string;
+  contentType?: string;  // 'text' または 'image'
+  imageData?: string;    // Base64エンコード画像データ
+  imageType?: string;    // 画像のMIMEタイプ
 };
 
 // ストアの状態型定義
@@ -42,8 +45,8 @@ interface ChatState {
   // チャット削除
   deleteChat: (id: string) => Promise<void>;
   
-  // メッセージ送信
-  sendMessage: (content: string, chatId: string) => Promise<void>;
+  // メッセージ送信（テキストと画像）
+  sendMessage: (content: string, chatId: string, imageData?: string, imageType?: string) => Promise<void>;
   
   // 現在のチャットをクリア
   clearCurrentChat: () => void;
@@ -156,15 +159,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
   
-  // メッセージ送信
-  sendMessage: async (content: string, chatId: string) => {
+  // メッセージ送信（テキストと画像）
+  sendMessage: async (content: string, chatId: string, imageData?: string, imageType?: string) => {
+    // メッセージタイプを判定
+    const hasImage = !!imageData && !!imageType;
+    const contentType = hasImage ? 'image' : 'text';
+    
     // ユーザーメッセージをローカルに追加
     const tempUserMessage = {
       id: `temp-${Date.now()}`,
       content,
       role: 'user' as const,
       createdAt: new Date().toISOString(),
-      chatId
+      chatId,
+      contentType,
+      imageData,
+      imageType
     };
     
     // ユーザーメッセージを即座に表示
@@ -187,7 +197,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       const response = await axios.post('/api/messages', {
         content,
-        chatId
+        chatId,
+        contentType,
+        imageData,
+        imageType
       });
       
       const { userMessage, assistantMessage, chatTitle } = response.data;

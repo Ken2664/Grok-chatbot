@@ -22,10 +22,13 @@ model Chat {
 }
 
 model Message {
-  id        String   @id @default(cuid())
-  content   String   @db.Text
-  role      String   // 'user' または 'assistant'
-  createdAt DateTime @default(now())
-  chatId    String
-  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  content     String   @db.Text
+  role        String // 'user' または 'assistant'
+  createdAt   DateTime @default(now())
+  chatId      String
+  contentType String?  @default("text") // 'text' または 'image'
+  imageData   String?  @db.Text         // Base64エンコード画像データ
+  imageType   String?                   // 画像のMIMEタイプ
+  chat        Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
 }

@@ -32,11 +32,11 @@ async function generateChatTitle(userMessage: string) {
 // メッセージを送信
 export async function POST(request: Request) {
   try {
-    const { content, chatId } = await request.json();
+    const { content, chatId, contentType, imageData, imageType } = await request.json();
 
-    if (!content || !chatId) {
+    if ((!content && !imageData) || !chatId) {
       return NextResponse.json(
-        { error: "メッセージ内容とチャットIDは必須です" },
+        { error: "メッセージ内容またはチャットIDが不足しています" },
         { status: 400 }
       );
     }
@@ -58,19 +58,24 @@ export async function POST(request: Request) {
       );
     }
 
-    // ユーザーメッセージを保存
+    // 画像データがある場合はそれを含めてユーザーメッセージを保存
+    const isImage = !!imageData && !!imageType;
     const userMessage = await prisma.message.create({
       data: {
-        content,
+        content: content || "",
         role: "user",
         chatId,
+        contentType: isImage ? "image" : "text",
+        imageData: imageData || null,
+        imageType: imageType || null
       },
     });
     
     // 最初のメッセージの場合、チャットタイトルを自動生成
     const messages = Array.isArray(chat.messages) ? chat.messages : [];
     if (messages.length === 0 && chat.title === '新しいチャット') {
-      const generatedTitle = await generateChatTitle(content);
+      const titleText = content || "画像チャット";
+      const generatedTitle = await generateChatTitle(titleText);
       await prisma.chat.update({
         where: { id: chatId },
         data: { 
@@ -106,6 +111,7 @@ export async function POST(request: Request) {
         content: assistantResponse,
         role: "assistant",
         chatId,
+        contentType: "text" // アシスタントの応答は常にテキスト
       },
     });
 

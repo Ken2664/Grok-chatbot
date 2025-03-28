@@ -46,7 +46,7 @@
     状態管理: Zustand
     データベース: PostgreSQL (Neon)
     ORM: Prisma
-    API: Grok API
+    API: xAI API
 
   データモデル:
     Chat:
@@ -90,7 +90,7 @@
 
   設定手順:
     1. Neonでデータベースを作成し接続情報を取得
-    2. .env.localに環境変数を設定 (DATABASE_URL, GROK_API_KEY, GROK_API_URL)
+    2. .env.localに環境変数を設定 (DATABASE_URL, XAI_API_KEY, XAI_API_URL)
     3. Prismaでマイグレーションを実行
     4. アプリケーションを起動してテスト
 

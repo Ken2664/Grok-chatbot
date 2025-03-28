@@ -48,10 +48,10 @@ export default function Home() {
     }
   };
 
-  // メッセージ送信時の処理
-  const handleSendMessage = (content: string) => {
+  // メッセージ送信時の処理（テキストと画像）
+  const handleSendMessage = (content: string, imageData?: string, imageType?: string) => {
     if (currentChat) {
-      sendMessage(content, currentChat.id);
+      sendMessage(content, currentChat.id, imageData, imageType);
     }
   };
 

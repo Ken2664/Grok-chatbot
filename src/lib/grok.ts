@@ -4,11 +4,22 @@ export type Message = {
   role: string;
   createdAt: Date;
   chatId: string;
+  contentType?: string;
+  imageData?: string;
+  imageType?: string;
 };
 
 export type GrokMessage = {
   role: "user" | "assistant" | "system";
-  content: string;
+  content: string | GrokContent[];
+};
+
+export type GrokContent = {
+  type: "text" | "image_url";
+  text?: string;
+  image_url?: {
+    url: string;
+  };
 };
 
 // messageの型に応じて処理を分岐する関数
@@ -34,20 +45,66 @@ export async function generateGrokResponse(messages: Message[] | GrokMessage[]):
       content: "あなたは親切なアシスタントです。",
     });
 
+    let hasImage = false;
+    let modelToUse = "grok-2-latest";
+
     // ユーザーとアシスタントの会話履歴を追加
     // Messageタイプの場合のみ変換が必要
     if (messages.length > 0 && 'id' in messages[0]) {
-      (messages as Message[]).forEach(message => {
-        formattedMessages.push({
-          role: message.role as 'user' | 'assistant',
-          content: message.content
-        });
+      const messageArray = messages as Message[];
+      
+      // メッセージを適切な形式に変換
+      messageArray.forEach(message => {
+        // 画像メッセージの場合
+        if (message.role === 'user' && message.contentType === 'image' && message.imageData) {
+          hasImage = true;
+          const contents: GrokContent[] = [];
+          
+          // テキストコンテンツがある場合
+          if (message.content) {
+            contents.push({
+              type: "text",
+              text: message.content
+            });
+          }
+          
+          // 画像データがある場合
+          if (message.imageData) {
+            contents.push({
+              type: "image_url",
+              image_url: {
+                url: `data:${message.imageType || 'image/jpeg'};base64,${message.imageData}`
+              }
+            });
+          }
+          
+          formattedMessages.push({
+            role: 'user',
+            content: contents
+          });
+        } else {
+          // テキストのみのメッセージの場合
+          formattedMessages.push({
+            role: message.role as 'user' | 'assistant',
+            content: message.content
+          });
+        }
       });
     } else {
       // すでにGrokMessage型の場合はそのまま追加
       formattedMessages.push(...(messages as GrokMessage[]));
+      
+      // GrokMessage型の場合は画像の有無を確認
+      hasImage = formattedMessages.some(msg => 
+        typeof msg.content !== 'string' && 
+        msg.content.some(content => content.type === 'image_url')
+      );
     }
-
+    
+    // 使用するモデルを決定
+    modelToUse = hasImage ? "grok-2-vision-1212" : "grok-2-latest";
+    console.log(`使用モデル: ${modelToUse}`);
+    
     console.log("リクエスト送信中..."); // デバッグ用
 
     const response = await fetch(`${apiUrl}/chat/completions`, {
@@ -57,7 +114,7 @@ export async function generateGrokResponse(messages: Message[] | GrokMessage[]):
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "grok-2-latest",
+        model: modelToUse,
         messages: formattedMessages,
         temperature: 0.7,
         max_tokens: 1000,

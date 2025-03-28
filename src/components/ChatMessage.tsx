@@ -9,6 +9,7 @@ interface ChatMessageProps {
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === 'user';
+  const hasImage = message.contentType === 'image' && message.imageData;
   
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
@@ -20,7 +21,18 @@ export function ChatMessage({ message }: ChatMessageProps) {
         }`}
       >
         {isUser ? (
-          message.content
+          <div>
+            {message.content && <div className="mb-2">{message.content}</div>}
+            {hasImage && (
+              <div className="mt-2">
+                <img 
+                  src={`data:${message.imageType || 'image/jpeg'};base64,${message.imageData}`}
+                  alt="ユーザーがアップロードした画像"
+                  className="max-w-full rounded-md max-h-60 object-contain"
+                />
+              </div>
+            )}
+          </div>
         ) : (
           <div className="prose prose-sm max-w-none dark:prose-invert">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>

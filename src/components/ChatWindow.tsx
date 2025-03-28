@@ -8,7 +8,7 @@ interface ChatWindowProps {
   chat: Chat | null;
   isLoading: boolean;
   isResponding: boolean;
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, imageData?: string, imageType?: string) => void;
 }
 
 export function ChatWindow({ chat, isLoading, isResponding, onSendMessage }: ChatWindowProps) {
@@ -32,6 +32,11 @@ export function ChatWindow({ chat, isLoading, isResponding, onSendMessage }: Cha
 
   // messagesが未定義の場合、空の配列をデフォルト値として使用
   const messages = chat.messages || [];
+
+  // 画像付きメッセージの送信ハンドラー
+  const handleSendMessage = (content: string, imageData?: string, imageType?: string) => {
+    onSendMessage(content, imageData, imageType);
+  };
 
   return (
     <div className="flex-grow flex flex-col h-full">
@@ -61,7 +66,7 @@ export function ChatWindow({ chat, isLoading, isResponding, onSendMessage }: Cha
         )}
       </div>
       
-      <ChatInput onSendMessage={onSendMessage} isLoading={isLoading || isResponding} />
+      <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading || isResponding} />
     </div>
   );
 } 
